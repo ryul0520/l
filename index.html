@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MY 커스텀 런치패드 PRO (반응속도 & 무음제거 완벽 최적화)</title>
+  <title>MY 커스텀 런치패드 PRO (자동저장 & 미리듣기 완벽판)</title>
   
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
@@ -22,60 +22,29 @@
     
     body {
       background-color: var(--bg-color);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
+      margin: 0; padding: 0;
+      display: flex; flex-direction: column;
+      height: 100vh; width: 100vw;
       font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
-      color: white;
-      user-select: none;
-      overflow: hidden;
-      /* 모바일 터치 딜레이 완벽 제거 */
+      color: white; user-select: none; overflow: hidden;
       touch-action: manipulation;
     }
 
     header {
-      flex: 0 0 auto;
-      padding: 10px 15px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: var(--panel-bg);
-      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-      z-index: 10;
+      flex: 0 0 auto; padding: 10px 15px; display: flex; flex-direction: column; align-items: center;
+      background: var(--panel-bg); box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+      border-bottom: 2px solid rgba(255,255,255,0.1); z-index: 10;
     }
 
-    h1 {
-      margin: 0 0 10px 0;
-      font-size: 20px;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-    }
+    h1 { margin: 0 0 10px 0; font-size: 20px; letter-spacing: 2px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
     
     .mode-switch {
-      display: flex;
-      background: #222;
-      border-radius: 30px;
-      padding: 5px;
-      margin-bottom: 10px;
-      gap: 5px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-      flex-wrap: wrap;
-      justify-content: center;
+      display: flex; background: #222; border-radius: 30px; padding: 5px; margin-bottom: 10px; gap: 5px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8); flex-wrap: wrap; justify-content: center;
     }
     .mode-btn {
-      background: transparent;
-      color: #aaa;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 25px;
-      font-weight: bold;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.3s;
+      background: transparent; color: #aaa; border: none; padding: 8px 12px; border-radius: 25px;
+      font-weight: bold; font-size: 13px; cursor: pointer; transition: all 0.3s;
     }
     .mode-btn.active { color: black; }
     .mode-btn[data-mode="play"].active { background: #00f2fe; box-shadow: 0 0 15px #00f2fe; }
@@ -85,95 +54,26 @@
     .mode-btn[data-mode="tts"].active { background: #a29bfe; box-shadow: 0 0 15px #a29bfe; color: black;}
     .mode-btn[data-mode="settings"].active { background: #ff9900; box-shadow: 0 0 15px #ff9900; color: black;}
 
-    .controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.2);
-      font-size: 13px;
-    }
-    button.metro-btn {
-      background: #333;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .control-group { display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.5); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); font-size: 13px; }
+    button.metro-btn { background: #333; color: white; border: none; padding: 5px 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
     button.metro-btn.active { background: #00f2fe; color: black; }
-    input[type=range] { cursor: pointer; width: 60px; }
+    input[type=range] { cursor: pointer; width: 80px; }
 
-    .launchpad-container {
-      flex: 1 1 auto;
-      padding: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .launchpad {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(3, 1fr);
-      gap: 12px;
-      width: 100%;
-      height: 100%;
-      max-width: 1200px;
-      max-height: 800px;
-    }
+    .launchpad-container { flex: 1 1 auto; padding: 15px; display: flex; align-items: center; justify-content: center; }
+    .launchpad { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12px; width: 100%; height: 100%; max-width: 1200px; max-height: 800px; }
 
     .pad {
-      border: none;
-      border-radius: 15px;
-      font-size: clamp(12px, 2vw, 20px);
-      font-weight: 900;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      white-space: pre-line;
-      word-break: break-word;
-      padding: 10px;
-      color: rgba(255,255,255,0.5);
-      transition: transform 0.05s, box-shadow 0.05s; /* 더 빠른 애니메이션 */
-      position: relative;
-      background: var(--empty-color);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 0px #1a1a24;
-      
-      /* 터치 시 지연 방지 (핵심!) */
-      touch-action: none; 
-      -webkit-tap-highlight-color: transparent;
+      border: none; border-radius: 15px; font-size: clamp(12px, 2vw, 20px); font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; text-align: center; white-space: pre-line; word-break: break-word;
+      padding: 10px; color: rgba(255,255,255,0.5); transition: transform 0.05s, box-shadow 0.05s; position: relative;
+      background: var(--empty-color); box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 0px #1a1a24;
+      touch-action: none; -webkit-tap-highlight-color: transparent;
     }
     
-    .pad.has-audio {
-      color: white;
-      background: linear-gradient(135deg, var(--recorded-color-1), var(--recorded-color-2));
-      box-shadow: 0 8px 0px #1a5b99, inset 0 0 20px rgba(255,255,255,0.2);
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-    }
-    .pad.has-tts {
-      color: white;
-      background: linear-gradient(135deg, var(--tts-color-1), var(--tts-color-2));
-      box-shadow: 0 8px 0px #4a3b99, inset 0 0 20px rgba(255,255,255,0.2);
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-    }
-
-    .pad.active {
-      transform: scale(0.92) translateY(5px) !important;
-      filter: brightness(1.4);
-    }
+    .pad.has-audio { color: white; background: linear-gradient(135deg, var(--recorded-color-1), var(--recorded-color-2)); box-shadow: 0 8px 0px #1a5b99, inset 0 0 20px rgba(255,255,255,0.2); text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    .pad.has-tts { color: white; background: linear-gradient(135deg, var(--tts-color-1), var(--tts-color-2)); box-shadow: 0 8px 0px #4a3b99, inset 0 0 20px rgba(255,255,255,0.2); text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    .pad.active { transform: scale(0.92) translateY(5px) !important; filter: brightness(1.4); }
     
     body.mode-move .pad { cursor: grab; animation: jiggle 0.3s infinite alternate; }
     body.mode-rename .pad { cursor: text; border: 2px dashed #00ff99; }
@@ -182,6 +82,7 @@
     
     @keyframes jiggle { 0% { transform: rotate(-1deg) scale(0.98); } 100% { transform: rotate(1deg) scale(1.02); } }
     
+    /* 🎛️ 개별 설정 모달 */
     .modal {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
@@ -190,13 +91,16 @@
     .modal.show { opacity: 1; pointer-events: auto; }
     .modal-content {
       background: #1a1a24; padding: 25px; border-radius: 20px; border: 2px solid #ff9900;
-      display: flex; flex-direction: column; gap: 15px; min-width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+      display: flex; flex-direction: column; gap: 12px; min-width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
     }
     .modal-content h3 { margin: 0 0 5px 0; color: #ffcc00; text-align: center; }
-    .setting-row { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;}
+    .setting-row { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 10px;}
     .setting-row input[type=range] { flex-grow: 1; margin: 0 15px; }
-    .setting-row input[type=checkbox] { transform: scale(1.3); margin-right: 10px; }
-    .close-btn { background: #ff9900; border: none; color: black; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.2s; }
+    .setting-row span.val { width: 40px; text-align: right; font-weight: bold; color: #00f2fe; }
+    
+    .preview-btn { background: #00f2fe; border: none; color: black; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; margin-top: 10px; }
+    .preview-btn:active { transform: scale(0.95); }
+    .close-btn { background: #ff9900; border: none; color: black; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
     .close-btn:active { transform: scale(0.95); }
 
     .pad.countdown { background: #ffcc00 !important; color: black !important; font-size: 40px !important; box-shadow: 0 0 30px #ffcc00 !important; transform: scale(1.05); }
@@ -210,7 +114,7 @@
 <body>
 
   <header>
-    <h1>🎛️ 100% MY 커스텀 런치패드 (반응속도 최적화)</h1>
+    <h1>🎛️ MY 커스텀 런치패드 PRO</h1>
     
     <div class="mode-switch">
       <button class="mode-btn active" data-mode="play">🎵 연주</button>
@@ -218,7 +122,7 @@
       <button class="mode-btn" data-mode="rename">✏️ 이름 변경</button>
       <button class="mode-btn" data-mode="record">🎙️ 자동 녹음</button>
       <button class="mode-btn" data-mode="tts">💬 TTS 입력</button>
-      <button class="mode-btn" data-mode="settings">🎛️ 개별 설정</button>
+      <button class="mode-btn" data-mode="settings">🎛️ 이펙트/속도 설정</button>
     </div>
 
     <div class="controls">
@@ -233,25 +137,37 @@
     <div class="launchpad" id="launchpad"></div>
   </div>
 
+  <!-- 설정 모달창 (슬라이더로 모두 변경) -->
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <h3><span id="modalPadName">PAD</span> 설정</h3>
+      <h3><span id="modalPadName">PAD</span> 상세 설정</h3>
+      
       <div class="setting-row">
         <label>🔊 볼륨</label>
         <input type="range" id="padVolume" min="0" max="2.0" step="0.1" value="1.0">
-        <span id="padVolumeVal" style="width:30px; text-align:right;">1.0</span>
+        <span id="padVolumeVal" class="val">1.0</span>
       </div>
+      
       <div class="setting-row">
-        <label>🎚️ 피치</label>
-        <input type="range" id="padPitch" min="0.5" max="2.0" step="0.1" value="1.0">
-        <span id="padPitchVal" style="width:30px; text-align:right;">1.0</span>
+        <label>⏩ 재생속도</label>
+        <input type="range" id="padSpeed" min="0.5" max="3.0" step="0.1" value="1.0">
+        <span id="padSpeedVal" class="val">1.0</span>
       </div>
-      <div class="setting-row" style="justify-content: flex-start; gap: 20px;">
-        <label><input type="checkbox" id="padReverb"> 🌌 리버브</label>
-        <label><input type="checkbox" id="padEcho"> 📢 에코</label>
-        <label><input type="checkbox" id="padDistort"> 🎸 디스토션</label>
+
+      <div class="setting-row">
+        <label>📢 에코 양</label>
+        <input type="range" id="padEcho" min="0" max="1.0" step="0.1" value="0.0">
+        <span id="padEchoVal" class="val">0.0</span>
       </div>
-      <button id="closeModal" class="close-btn">저장 및 닫기</button>
+
+      <div class="setting-row">
+        <label>🌌 리버브 양</label>
+        <input type="range" id="padReverb" min="0" max="1.0" step="0.1" value="0.0">
+        <span id="padReverbVal" class="val">0.0</span>
+      </div>
+      
+      <button id="previewBtn" class="preview-btn">▶️ 변경된 소리 들어보기</button>
+      <button id="closeModal" class="close-btn">닫기</button>
     </div>
   </div>
 
@@ -263,9 +179,10 @@
     let mediaRecorder, audioChunks = [], isRecording = false, isCountingDown = false, isWaitingForSound = false; 
     let analyserLoopId, recordingBtn = null;
 
+    // 데이터 모델 (echo, reverb를 float 수치 값으로 변경, pitch -> speed)
     const padsData = Array.from({ length: 15 }, (_, i) => ({
-      id: `pad_${i+1}`, text: `PAD ${i+1}`, customAudioBuffer: null, fallbackTTS: null,
-      volume: 1.0, pitch: 1.0, reverb: false, echo: false, distortion: false
+      id: `pad_${i+1}`, text: `PAD ${i+1}`, customAudioBuffer: null, audioArrayBuffer: null, type: null, fallbackTTS: null,
+      volume: 1.0, speed: 1.0, reverb: 0.0, echo: 0.0
     }));
 
     const launchpad = document.getElementById('launchpad');
@@ -275,15 +192,70 @@
       btn.className = 'pad';
       btn.innerText = data.text;
       btn.dataset.id = data.id;
-      // 터치 딜레이를 완벽히 없애기 위해 pointerdown 이벤트 사용
+      
       btn.addEventListener('pointerdown', (e) => {
-        if(currentMode === 'play') e.preventDefault(); // 더블 탭 확대 등 기본 동작 방지
-        handlePadClick(data, btn, e);
+        if (currentMode !== 'move') e.preventDefault(); 
+        const targetData = padsData.find(p => p.id === btn.dataset.id);
+        handlePadClick(targetData, btn, e);
       });
       launchpad.appendChild(btn);
     });
 
-    const sortable = new Sortable(launchpad, { animation: 150, disabled: true, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag' });
+    const sortable = new Sortable(launchpad, { 
+      animation: 150, disabled: true, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
+      onEnd: () => {
+        const order = Array.from(launchpad.children).map(btn => btn.dataset.id);
+        localStorage.setItem("padOrder", JSON.stringify(order));
+      }
+    });
+
+    let db;
+    const request = indexedDB.open("LaunchpadProDB2", 1); // 스키마 변경을 위해 버전 또는 이름 변경
+    request.onupgradeneeded = (e) => { db = e.target.result; db.createObjectStore("pads", { keyPath: "id" }); };
+    request.onsuccess = (e) => { db = e.target.result; loadFromDB(); };
+
+    function savePadToDB(data) {
+      if (!db) return;
+      const tx = db.transaction("pads", "readwrite");
+      tx.objectStore("pads").put({
+        id: data.id, text: data.text, volume: data.volume, speed: data.speed, 
+        reverb: data.reverb, echo: data.echo, 
+        audioArrayBuffer: data.audioArrayBuffer, fallbackTTS: data.fallbackTTS, type: data.type
+      });
+    }
+
+    async function loadFromDB() {
+      if (!db) return;
+      const savedOrder = JSON.parse(localStorage.getItem("padOrder"));
+      if (savedOrder) savedOrder.forEach(id => { const btn = document.querySelector(`.pad[data-id="${id}"]`); if (btn) launchpad.appendChild(btn); });
+
+      const req = db.transaction("pads", "readonly").objectStore("pads").getAll();
+      req.onsuccess = async (e) => {
+        initAudio();
+        for (let item of e.target.result) {
+          const data = padsData.find(p => p.id === item.id);
+          if (!data) continue;
+          
+          Object.assign(data, item); 
+          // 구버전 호환성 패치 (true/false를 0.5/0.0 수치로 변환)
+          if(typeof data.echo === "boolean") data.echo = data.echo ? 0.5 : 0.0;
+          if(typeof data.reverb === "boolean") data.reverb = data.reverb ? 0.5 : 0.0;
+          if(item.pitch !== undefined) data.speed = item.pitch;
+
+          const btn = document.querySelector(`.pad[data-id="${data.id}"]`);
+          btn.innerText = data.text;
+          
+          if (data.audioArrayBuffer) {
+            try {
+              data.customAudioBuffer = trimSilence(await audioCtx.decodeAudioData(data.audioArrayBuffer.slice(0)));
+              btn.classList.add(data.type === 'tts' ? 'has-tts' : 'has-audio');
+            } catch(err) { console.error("로딩 에러", err); }
+          } else if (data.fallbackTTS) {
+            btn.classList.add('has-tts');
+          }
+        }
+      };
+    }
 
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -292,49 +264,66 @@
 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentMode = btn.dataset.mode;
-        document.body.className = `mode-${currentMode}`;
-
+        currentMode = btn.dataset.mode; document.body.className = `mode-${currentMode}`;
         sortable.option('disabled', currentMode !== 'move');
       });
     });
 
-    let currentEditingPad = null;
+    let currentEditingPad = null, currentEditingBtn = null;
     const modal = document.getElementById('settingsModal');
     
-    function openSettings(data) {
-      currentEditingPad = data;
+    function openSettings(data, btn) {
+      currentEditingPad = data; currentEditingBtn = btn;
       document.getElementById('modalPadName').innerText = data.text;
+      
       document.getElementById('padVolume').value = data.volume; document.getElementById('padVolumeVal').innerText = data.volume.toFixed(1);
-      document.getElementById('padPitch').value = data.pitch; document.getElementById('padPitchVal').innerText = data.pitch.toFixed(1);
-      document.getElementById('padReverb').checked = data.reverb; document.getElementById('padEcho').checked = data.echo; document.getElementById('padDistort').checked = data.distortion;
+      document.getElementById('padSpeed').value = data.speed; document.getElementById('padSpeedVal').innerText = data.speed.toFixed(1) + 'x';
+      document.getElementById('padEcho').value = data.echo; document.getElementById('padEchoVal').innerText = data.echo.toFixed(1);
+      document.getElementById('padReverb').value = data.reverb; document.getElementById('padReverbVal').innerText = data.reverb.toFixed(1);
+      
       modal.classList.add('show');
     }
 
+    function playPreview() {
+      if(currentEditingPad && currentEditingBtn) {
+        playSound(currentEditingPad, currentEditingBtn);
+        savePadToDB(currentEditingPad);
+      }
+    }
+
+    // 슬라이더 조작 시 실시간 텍스트 반영
     document.getElementById('padVolume').addEventListener('input', (e) => { currentEditingPad.volume = parseFloat(e.target.value); document.getElementById('padVolumeVal').innerText = currentEditingPad.volume.toFixed(1); });
-    document.getElementById('padPitch').addEventListener('input', (e) => { currentEditingPad.pitch = parseFloat(e.target.value); document.getElementById('padPitchVal').innerText = currentEditingPad.pitch.toFixed(1); });
-    document.getElementById('padReverb').addEventListener('change', (e) => { currentEditingPad.reverb = e.target.checked; });
-    document.getElementById('padEcho').addEventListener('change', (e) => { currentEditingPad.echo = e.target.checked; });
-    document.getElementById('padDistort').addEventListener('change', (e) => { currentEditingPad.distortion = e.target.checked; });
-    document.getElementById('closeModal').addEventListener('click', () => { modal.classList.remove('show'); });
+    document.getElementById('padSpeed').addEventListener('input', (e) => { currentEditingPad.speed = parseFloat(e.target.value); document.getElementById('padSpeedVal').innerText = currentEditingPad.speed.toFixed(1) + 'x'; });
+    document.getElementById('padEcho').addEventListener('input', (e) => { currentEditingPad.echo = parseFloat(e.target.value); document.getElementById('padEchoVal').innerText = currentEditingPad.echo.toFixed(1); });
+    document.getElementById('padReverb').addEventListener('input', (e) => { currentEditingPad.reverb = parseFloat(e.target.value); document.getElementById('padReverbVal').innerText = currentEditingPad.reverb.toFixed(1); });
+    
+    // 드래그를 놓았을 때(change) 소리 재생
+    ['padVolume', 'padSpeed', 'padEcho', 'padReverb'].forEach(id => document.getElementById(id).addEventListener('change', playPreview));
+    
+    document.getElementById('previewBtn').addEventListener('click', playPreview);
+    document.getElementById('closeModal').addEventListener('click', () => modal.classList.remove('show'));
 
     async function handlePadClick(data, btn, e) {
       if (currentMode === 'move') return; 
 
       if (currentMode === 'rename') {
-        const newName = prompt("이 패드의 새로운 이름을 입력하세요:", data.text);
-        if (newName !== null && newName.trim() !== "") { data.text = newName; btn.innerText = newName; }
+        setTimeout(() => {
+          const newName = prompt("새로운 이름을 입력하세요:", data.text);
+          if (newName !== null && newName.trim() !== "") { 
+            data.text = newName; btn.innerText = newName; savePadToDB(data);
+          }
+        }, 10);
         return;
       }
-
-      if (currentMode === 'settings') { openSettings(data); return; }
-
+      if (currentMode === 'settings') { openSettings(data, btn); return; }
       if (currentMode === 'tts') {
-        const text = prompt("재생할 단어나 문장을 입력하세요 (TTS):", "");
-        if (text !== null && text.trim() !== "") generateTTS(data, btn, text.trim());
+        setTimeout(() => {
+          const defaultTxt = data.text.startsWith('PAD ') ? "" : data.text;
+          const text = prompt("재생할 단어나 문장을 입력하세요 (다중 재생 지원):", defaultTxt);
+          if (text !== null && text.trim() !== "") generateTTS(data, btn, text.trim());
+        }, 10);
         return;
       }
-
       if (currentMode === 'record') {
         if (isCountingDown) return; 
         if (isRecording || isWaitingForSound) {
@@ -345,63 +334,49 @@
         }
         return;
       }
-
-      if (currentMode === 'play') {
-        if (e.pointerType === "mouse" && e.button !== 0) return;
-        playSound(data, btn);
-      }
+      if (currentMode === 'play') { playSound(data, btn); }
     }
 
-    // ✂️ 오디오 묵음(공백) 자동 제거 함수 (누르자마자 즉각 재생을 위함)
     function trimSilence(buffer) {
-      const threshold = 0.02; // 볼륨이 2% 이하인 부분을 공백으로 간주
-      const channels = buffer.numberOfChannels;
-      const length = buffer.length;
+      const threshold = 0.02, channels = buffer.numberOfChannels, length = buffer.length;
       let start = length, end = 0;
-
       for (let i = 0; i < channels; i++) {
         const data = buffer.getChannelData(i);
-        // 앞부분 공백 찾기
         let j = 0; while (j < length && Math.abs(data[j]) < threshold) j++;
         if (j < start) start = j;
-        // 뒷부분 공백 찾기
         let k = length - 1; while (k >= 0 && Math.abs(data[k]) < threshold) k--;
         if (k > end) end = k;
       }
+      if (start >= end) return buffer; 
       
-      if (start >= end) return buffer; // 소리가 아예 없으면 원본 반환
-      
-      // 조금의 여유 마진(0.01초)을 두고 자름
       const margin = Math.floor(buffer.sampleRate * 0.01);
-      start = Math.max(0, start - margin);
-      end = Math.min(length, end + margin);
-      
-      const trimmedLength = end - start;
-      const trimmedBuffer = audioCtx.createBuffer(channels, trimmedLength, buffer.sampleRate);
-      
-      for (let i = 0; i < channels; i++) {
-        const trimmedData = trimmedBuffer.getChannelData(i);
-        const originalData = buffer.getChannelData(i);
-        for (let j = 0; j < trimmedLength; j++) trimmedData[j] = originalData[start + j];
-      }
+      start = Math.max(0, start - margin); end = Math.min(length, end + margin);
+      const trimmedBuffer = audioCtx.createBuffer(channels, end - start, buffer.sampleRate);
+      for (let i = 0; i < channels; i++) trimmedBuffer.copyToChannel(buffer.getChannelData(i).subarray(start, end), i);
       return trimmedBuffer;
     }
 
+    // 💡 TTS 다중 동시 재생을 위한 개선된 다운로드 방식
     async function generateTTS(data, btn, text) {
       initAudio(); btn.classList.remove('has-audio', 'has-tts'); btn.classList.add('waiting'); btn.innerHTML = "⏳<br>생성 중...";
       try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent(text)}`)}`;
+        // 더 안정적인 구글 TTS API 엔드포인트 적용 (client=gtx)
+        const ttsUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ko&q=${encodeURIComponent(text)}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`;
+        
         const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error("네트워크 오류");
         
-        const rawBuffer = await audioCtx.decodeAudioData(await response.arrayBuffer());
-        // 🚀 TTS 앞뒤 쉬는시간(공백) 완벽 제거!
-        data.customAudioBuffer = trimSilence(rawBuffer);
-        data.fallbackTTS = null; 
+        const arrayBuffer = await response.arrayBuffer();
+        data.audioArrayBuffer = arrayBuffer; data.type = 'tts'; data.fallbackTTS = null; 
+        data.customAudioBuffer = trimSilence(await audioCtx.decodeAudioData(arrayBuffer.slice(0)));
       } catch (err) {
-        data.customAudioBuffer = null; data.fallbackTTS = text;
+        // 통신 실패시에만 내장 TTS (이 경우에만 동시 재생 불가)
+        console.warn("TTS Fetch 실패, 내장 TTS로 폴백합니다.");
+        data.customAudioBuffer = null; data.audioArrayBuffer = null; data.fallbackTTS = text; data.type = 'tts';
       }
       data.text = text; btn.classList.remove('waiting'); btn.classList.add('has-tts'); btn.innerText = text;
+      savePadToDB(data);
     }
 
     async function startCountdownAndRecord(data, btn) {
@@ -424,7 +399,7 @@
       function checkSoundLevel() {
         if (!isWaitingForSound) return;
         analyser.getByteFrequencyData(dataArray);
-        if (Math.max(...dataArray) > 35) { // 감도 35 초과시 녹음 시작
+        if (Math.max(...dataArray) > 35) { 
           isWaitingForSound = false; mediaRecorder.start(); isRecording = true;
           btn.classList.remove('waiting'); btn.classList.add('recording'); btn.innerHTML = "🔴<br>녹음 중...";
         } else { analyserLoopId = requestAnimationFrame(checkSoundLevel); }
@@ -439,75 +414,82 @@
       }
       mediaRecorder.onstop = async () => {
         initAudio();
-        const rawBuffer = await audioCtx.decodeAudioData(await (new Blob(audioChunks)).arrayBuffer());
-        // 🚀 마이크 녹음 시 맨 앞 공백 완벽 제거!
-        data.customAudioBuffer = trimSilence(rawBuffer);
-        data.fallbackTTS = null; 
+        const arrayBuffer = await (new Blob(audioChunks)).arrayBuffer();
+        data.audioArrayBuffer = arrayBuffer; data.type = 'audio'; data.fallbackTTS = null;
+        data.customAudioBuffer = trimSilence(await audioCtx.decodeAudioData(arrayBuffer.slice(0)));
         
         btn.classList.remove('recording', 'has-tts'); btn.classList.add('has-audio'); btn.innerText = data.text; 
         mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        savePadToDB(data);
       };
       mediaRecorder.stop(); isRecording = false; recordingBtn = null;
     }
 
+    // 💡 이펙트 병렬 믹싱 (수치에 따른 조절) 적용
     function playSound(data, btn) {
       initAudio();
-      
-      // 즉각적인 시각 피드백
       btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 100);
 
       if (data.customAudioBuffer) {
         const source = audioCtx.createBufferSource();
         source.buffer = data.customAudioBuffer;
-        source.playbackRate.value = data.pitch; 
+        source.playbackRate.value = data.speed; // 재생 속도 조절
         
-        let currentNode = source;
+        // 최종 사운드가 모이는 마스터 노드
+        const masterMix = audioCtx.createGain(); 
+        masterMix.gain.value = 1.0;
 
-        if (data.distortion) {
-          const distortion = audioCtx.createWaveShaper();
-          distortion.curve = makeDistortionCurve(50); distortion.oversample = '4x';
-          currentNode.connect(distortion); currentNode = distortion;
-        }
+        // 원본 사운드 (Dry) 연결
+        const dryGain = audioCtx.createGain();
+        dryGain.gain.value = 1.0; 
+        source.connect(dryGain);
+        dryGain.connect(masterMix);
 
-        if (data.echo) {
+        // 에코 (Delay) 적용
+        if (data.echo > 0) {
           const delay = audioCtx.createDelay(); delay.delayTime.value = 0.3; 
           const feedback = audioCtx.createGain(); feedback.gain.value = 0.4; 
-          const delayGain = audioCtx.createGain(); delayGain.gain.value = 0.6; 
           
-          currentNode.connect(delay); delay.connect(feedback); feedback.connect(delay); delay.connect(delayGain);
-          const mergeNode = audioCtx.createGain(); currentNode.connect(mergeNode); delayGain.connect(mergeNode);
-          currentNode = mergeNode;
+          const echoWet = audioCtx.createGain(); 
+          echoWet.gain.value = data.echo; // 슬라이더 수치만큼 에코 볼륨 반영
+
+          source.connect(delay); 
+          delay.connect(feedback); 
+          feedback.connect(delay); 
+          
+          delay.connect(echoWet);
+          echoWet.connect(masterMix);
         }
 
-        if (data.reverb) {
+        // 리버브 적용
+        if (data.reverb > 0) {
           const reverb = audioCtx.createConvolver();
           if (!window.reverbBuffer) window.reverbBuffer = createReverbBuffer(audioCtx);
           reverb.buffer = window.reverbBuffer;
           
-          const mergeNode = audioCtx.createGain(); currentNode.connect(mergeNode);
-          const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.6; 
-          
-          currentNode.connect(reverb); reverb.connect(wetGain); wetGain.connect(mergeNode);
-          currentNode = mergeNode;
+          const reverbWet = audioCtx.createGain(); 
+          reverbWet.gain.value = data.reverb * 1.5; // 리버브 효과를 조금 더 증폭해서 믹스
+
+          source.connect(reverb); 
+          reverb.connect(reverbWet); 
+          reverbWet.connect(masterMix);
         }
 
+        // 최종 볼륨 적용
         const volumeNode = audioCtx.createGain();
         volumeNode.gain.value = data.volume; 
-        currentNode.connect(volumeNode); volumeNode.connect(audioCtx.destination);
         
-        // 딜레이 0초, 누르자마자 즉시 재생!
+        masterMix.connect(volumeNode);
+        volumeNode.connect(audioCtx.destination);
+        
         source.start(0);
 
       } else if (data.fallbackTTS) {
+        // 폴백 TTS (동시 재생 불가)
         const utterance = new SpeechSynthesisUtterance(data.fallbackTTS);
-        utterance.lang = 'ko-KR'; utterance.pitch = data.pitch; utterance.volume = data.volume;
+        utterance.lang = 'ko-KR'; utterance.rate = data.speed; utterance.volume = data.volume;
         window.speechSynthesis.speak(utterance);
       }
-    }
-
-    function makeDistortionCurve(amount) {
-      const k = amount, n = 44100, curve = new Float32Array(n), deg = Math.PI / 180;
-      for (let i = 0; i < n; ++i) { let x = i * 2 / n - 1; curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); } return curve;
     }
 
     function createReverbBuffer(ctx) {
@@ -517,7 +499,6 @@
         for (let j = 0; j < length; j++) { channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 3); }
       } return impulse;
     }
-
     function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
 
     let metroBPM = 120, isMetroPlaying = false, nextNoteTime = 0.0, metroTimerID;
