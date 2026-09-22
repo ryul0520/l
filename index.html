@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBO-BBI 런치패드 PRO (녹음 & 자리이동)</title>
+  <title>MY 커스텀 런치패드 PRO</title>
   
   <!-- 부드러운 드래그 앤 드롭 -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -12,10 +12,9 @@
     :root {
       --bg-color: #0a0a0f;
       --panel-bg: rgba(20, 20, 30, 0.8);
-      --user-color-1: #ff007f;
-      --user-color-2: #7a00ff;
-      --base-color-1: #00f2fe;
-      --base-color-2: #4facfe;
+      --empty-color: #333344;
+      --recorded-color-1: #00f2fe;
+      --recorded-color-2: #4facfe;
     }
     
     * { box-sizing: border-box; }
@@ -62,28 +61,25 @@
       margin-bottom: 10px;
       gap: 5px;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .mode-btn {
       background: transparent;
       color: #aaa;
       border: none;
-      padding: 8px 20px;
+      padding: 8px 15px;
       border-radius: 25px;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.3s;
     }
-    .mode-btn.active {
-      color: white;
-      background: #00f2fe;
-      color: black;
-      box-shadow: 0 0 15px #00f2fe;
-    }
-    /* 자리 이동 모드 전용 컬러 */
+    .mode-btn.active { color: black; }
+    .mode-btn[data-mode="play"].active { background: #00f2fe; box-shadow: 0 0 15px #00f2fe; }
     .mode-btn[data-mode="move"].active { background: #ffcc00; box-shadow: 0 0 15px #ffcc00; }
-    /* 녹음 모드 전용 컬러 */
     .mode-btn[data-mode="record"].active { background: #ff3366; box-shadow: 0 0 15px #ff3366; color: white;}
+    .mode-btn[data-mode="rename"].active { background: #00ff99; box-shadow: 0 0 15px #00ff99; } /* 이름 변경 모드 */
 
     .controls {
       display: flex;
@@ -144,33 +140,38 @@
       justify-content: center;
       text-align: center;
       white-space: pre-line;
+      word-break: keep-all;
       padding: 10px;
-      color: white;
-      transition: transform 0.05s, box-shadow 0.1s, filter 0.1s;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+      color: rgba(255,255,255,0.5);
+      transition: all 0.1s;
       position: relative;
+      background: var(--empty-color);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 0px #1a1a24;
     }
     
-    .user-pad { background: linear-gradient(135deg, var(--user-color-1), var(--user-color-2)); box-shadow: 0 8px 0px #4a0099; }
-    .base-pad { background: linear-gradient(135deg, var(--base-color-1), var(--base-color-2)); box-shadow: 0 8px 0px #1a5b99; }
+    /* 녹음된 패드 스타일 */
+    .pad.has-audio {
+      color: white;
+      background: linear-gradient(135deg, var(--recorded-color-1), var(--recorded-color-2));
+      box-shadow: 0 8px 0px #1a5b99, inset 0 0 20px rgba(255,255,255,0.2);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
 
     /* 타격 애니메이션 */
     .pad.active {
       transform: scale(0.92) translateY(5px) !important;
       filter: brightness(1.4);
     }
-    .user-pad.active { box-shadow: 0 0px 0px #4a0099, 0 0 30px var(--user-color-1); }
-    .base-pad.active { box-shadow: 0 0px 0px #1a5b99, 0 0 30px var(--base-color-1); }
+    .pad.has-audio.active { box-shadow: 0 0px 0px #1a5b99, 0 0 30px var(--recorded-color-1); }
 
-    /* 자리 이동 모드 애니메이션 (흔들림) */
-    body.mode-move .pad {
-      cursor: grab;
-      animation: jiggle 0.3s infinite alternate;
-    }
+    /* 모드별 애니메이션 */
+    body.mode-move .pad { cursor: grab; animation: jiggle 0.3s infinite alternate; }
+    body.mode-rename .pad { cursor: text; border: 2px dashed #00ff99; }
     @keyframes jiggle {
       0% { transform: rotate(-1deg) scale(0.98); }
       100% { transform: rotate(1deg) scale(1.02); }
     }
+    
     .sortable-ghost { opacity: 0.2; }
     .sortable-drag {
       cursor: grabbing !important;
@@ -189,6 +190,7 @@
     }
     .pad.recording {
       background: #ff3366 !important;
+      color: white;
       box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.8) !important;
       animation: pulseRecord 1s infinite !important;
       transform: scale(0.95);
@@ -198,13 +200,14 @@
 <body>
 
   <header>
-    <h1>🎛️ BBO-BBI LAUNCHPAD PRO</h1>
+    <h1>🎛️ 100% MY 커스텀 런치패드</h1>
     
     <!-- 모드 선택 버튼 -->
     <div class="mode-switch">
       <button class="mode-btn active" data-mode="play">🎵 연주</button>
       <button class="mode-btn" data-mode="move">🔄 자리 변경</button>
-      <button class="mode-btn" data-mode="record">🎙️ 효과음 녹음</button>
+      <button class="mode-btn" data-mode="rename">✏️ 이름 변경</button>
+      <button class="mode-btn" data-mode="record">🎙️ 소리 녹음</button>
     </div>
 
     <div class="controls">
@@ -213,8 +216,7 @@
         <label>BPM: <input type="range" id="bpmSlider" min="60" max="200" value="120"> <span id="bpmVal">120</span></label>
       </div>
       <div class="control-group">
-        <label>🎚️ 피치: <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0"> x<span id="pitchVal">1.0</span></label>
-        <label>⚡ 속도: <input type="range" id="speedSlider" min="1.0" max="4.0" step="0.1" value="2.5"> x<span id="speedVal">2.5</span></label>
+        <label>🎚️ 사운드 조절(Pitch/Speed): <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0"> x<span id="pitchVal">1.0</span></label>
       </div>
     </div>
   </header>
@@ -227,9 +229,8 @@
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx;
 
-    let currentMode = 'play'; // play, move, record
+    let currentMode = 'play'; 
     let globalPitch = 1.0;
-    let globalSpeed = 2.5;
     
     // 녹음 관련 변수
     let mediaRecorder;
@@ -237,45 +238,30 @@
     let isRecording = false;
     let recordingBtn = null;
 
-    // 패드 기본 데이터
-    const padsData = [
-      { id: 'p1', text: "🐶\n뽀삐...", type: "user", pitch: 1.0 },
-      { id: 'p2', text: "🐾\n뽀뽀뽀삐삐삐!!!", type: "user", pitch: 1.5 },
-      { id: 'p3', text: "💦\n축축...", type: "user", pitch: 0.8 },
-      { id: 'b1', text: "🥁\n킥 드럼\n(쿵!)", type: "base", sound: "kick" },
-      { id: 'b2', text: "💥\n스네어\n(팍!)", type: "base", sound: "snare" },
-      
-      { id: 'p4', text: "👽\n으응응미이인", type: "user", pitch: 1.2 },
-      { id: 'p5', text: "😡\n썽우우우우우우!!!", type: "user", pitch: 0.5 },
-      { id: 'p6', text: "🚨\n삐이이이이이!!!", type: "user", pitch: 2.0 },
-      { id: 'b3', text: "✨\n하이햇\n(칫!)", type: "base", sound: "hihat" },
-      { id: 'b4', text: "👏\n클랩\n(짝!)", type: "base", sound: "clap" },
-      
-      { id: 'p7', text: "🌋\n쿠구구구구궁!!!", type: "user", pitch: 0.3 },
-      { id: 'p8', text: "💣\n쾅!!!", type: "user", pitch: 0.4 },
-      { id: 'p9', text: "🚀\n콰아아아앙!!!", type: "user", pitch: 0.2 },
-      { id: 'b5', text: "💨\n오픈 하이햇\n(치익-)", type: "base", sound: "openhat" },
-      { id: 'b6', text: "🔊\n808 베이스\n(우웅~)", type: "base", sound: "808" }
-    ];
+    // 15개의 텅 빈 기본 패드 데이터 생성
+    const padsData = Array.from({ length: 15 }, (_, i) => ({
+      id: `pad_${i+1}`,
+      text: `PAD ${i+1}`,
+      customAudioBuffer: null
+    }));
 
     const launchpad = document.getElementById('launchpad');
 
     // 패드 생성
     padsData.forEach((data) => {
       const btn = document.createElement('button');
-      btn.className = `pad ${data.type}-pad`;
-      btn.innerHTML = data.text.replace(/\n/g, '<br>');
+      btn.className = 'pad';
+      btn.innerText = data.text;
       btn.dataset.id = data.id;
       
-      // PC/모바일 통합 클릭(터치) 이벤트
       btn.addEventListener('pointerdown', (e) => handlePadClick(data, btn, e));
       launchpad.appendChild(btn);
     });
 
-    // 🔥 드래그 앤 드롭 초기화 (기본은 꺼짐)
+    // 드래그 앤 드롭 초기화
     const sortable = new Sortable(launchpad, {
       animation: 150,
-      disabled: true, // 연주 모드에서는 꺼둠
+      disabled: true,
       ghostClass: 'sortable-ghost',
       dragClass: 'sortable-drag'
     });
@@ -283,35 +269,40 @@
     // 🚀 모드 전환 로직
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        // 기존 녹음 중지
         if (isRecording) stopRecording();
 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentMode = btn.dataset.mode;
         
-        document.body.className = `mode-${currentMode}`; // CSS 제어용
+        document.body.className = `mode-${currentMode}`;
 
         if (currentMode === 'move') {
-          sortable.option('disabled', false); // 드래그 즉시 활성화 (딜레이 없음)
-          alert("자리 변경 모드 🔄\n패드를 눌러서 원하는 위치로 즉시 드래그하세요!");
+          sortable.option('disabled', false);
         } else {
-          sortable.option('disabled', true); // 다른 모드에서는 드래그 비활성화
-        }
-
-        if (currentMode === 'record') {
-          alert("효과음 녹음 모드 🎙️\n패드를 한 번 누르면 녹음 시작, 다시 누르면 저장됩니다!\n(마이크 권한을 허용해주세요)");
+          sortable.option('disabled', true);
         }
       });
     });
 
-    // 🎚️ 패드 클릭 / 터치 핸들러
+    // 🎚️ 패드 클릭 핸들러
     async function handlePadClick(data, btn, e) {
-      if (currentMode === 'move') return; // 이동 모드에서는 SortableJS가 처리함
+      if (currentMode === 'move') return; 
 
+      // ✏️ 이름 변경 모드
+      if (currentMode === 'rename') {
+        const newName = prompt("이 패드의 새로운 이름을 입력하세요:", data.text);
+        if (newName !== null && newName.trim() !== "") {
+          data.text = newName;
+          btn.innerText = newName;
+        }
+        return;
+      }
+
+      // 🎙️ 녹음 모드
       if (currentMode === 'record') {
         if (isRecording) {
-          if (recordingBtn === btn) stopRecording(data, btn); // 같은 버튼 누르면 저장
+          if (recordingBtn === btn) stopRecording(data, btn); 
           else alert("현재 다른 패드를 녹음 중입니다!");
         } else {
           startRecording(data, btn);
@@ -319,13 +310,14 @@
         return;
       }
 
+      // 🎵 연주 모드
       if (currentMode === 'play') {
-        if (e.pointerType === "mouse" && e.button !== 0) return; // 좌클릭만 반응
+        if (e.pointerType === "mouse" && e.button !== 0) return;
         playSound(data, btn);
       }
     }
 
-    // 🎙️ 녹음 기능 구현
+    // 🎙️ 녹음 기능
     async function startRecording(data, btn) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -341,9 +333,9 @@
         recordingBtn = btn;
         
         btn.classList.add('recording');
-        btn.innerHTML = "🔴<br>녹음 중...<br>(다시 누르세요)";
+        btn.innerText = "🔴 녹음 중...";
       } catch (err) {
-        alert("마이크 접근 권한이 거부되었습니다.");
+        alert("마이크 접근 권한이 필요합니다!");
       }
     }
 
@@ -353,12 +345,11 @@
         const audioBlob = new Blob(audioChunks);
         const arrayBuffer = await audioBlob.arrayBuffer();
         
-        // 지연 시간(레이턴시) 없는 재생을 위해 AudioBuffer로 변환 후 저장
         data.customAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
         
         btn.classList.remove('recording');
-        btn.innerHTML = `🎤<br>MY 사운드<br>저장됨`;
-        btn.style.background = "linear-gradient(135deg, #ff9900, #ff3300)"; // 커스텀 사운드 색상
+        btn.classList.add('has-audio'); // 소리가 있다는 표시 (색상 변경)
+        btn.innerText = data.text; // 원래 설정한 이름으로 복구
       };
       
       mediaRecorder.stop();
@@ -366,45 +357,36 @@
       recordingBtn = null;
     }
 
-    // 🎵 사운드 재생 로직
+    // 🎵 커스텀 사운드 재생 로직
     function playSound(data, btn) {
       initAudio();
+      
+      // 번쩍이는 효과
       btn.classList.add('active');
       setTimeout(() => btn.classList.remove('active'), 100);
 
-      let finalPitch = data.pitch ? data.pitch * globalPitch : globalPitch;
-
-      // 1. 유저가 직접 녹음한 소리가 있는 경우 (우선 재생)
+      // 녹음된 오디오가 있을 때만 소리 재생
       if (data.customAudioBuffer) {
         const source = audioCtx.createBufferSource();
         source.buffer = data.customAudioBuffer;
-        // 커스텀 녹음본도 상단의 '피치/속도' 조절 바의 영향을 받습니다.
-        source.playbackRate.value = globalPitch * (globalSpeed / 2.5); 
+        
+        // 피치와 스피드를 동시에 조절 (턴테이블 느낌)
+        source.playbackRate.value = globalPitch; 
+        
         source.connect(audioCtx.destination);
         source.start(0);
-        return;
-      }
-
-      // 2. 녹음본이 없으면 기본 설정된 소리 재생
-      if (data.type === 'user') {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(data.text.replace(/[^가-힣!.]/g, '')); 
-        utterance.lang = 'ko-KR';
-        utterance.pitch = Math.max(0.1, Math.min(2.0, finalPitch)); 
-        utterance.rate = globalSpeed; 
-        window.speechSynthesis.speak(utterance);
-      } else if (data.type === 'base') {
-        playSynthBeat(data.sound, finalPitch);
+      } else {
+        // 비어있는 패드일 경우 시각적 피드백만
+        console.log("빈 패드입니다. 녹음 모드에서 소리를 추가하세요!");
       }
     }
 
-    // 오디오 컨텍스트 초기화
     function initAudio() {
       if (!audioCtx) audioCtx = new AudioContext();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    /* --- 이하 메트로놈 및 비트 생성기 (이전과 동일) --- */
+    // ⏱️ 메트로놈 로직
     let metroBPM = 120, isMetroPlaying = false, nextNoteTime = 0.0, metroTimerID;
     
     document.getElementById('bpmSlider').addEventListener('input', (e) => {
@@ -412,9 +394,6 @@
     });
     document.getElementById('pitchSlider').addEventListener('input', (e) => {
       globalPitch = parseFloat(e.target.value); document.getElementById('pitchVal').innerText = globalPitch.toFixed(1);
-    });
-    document.getElementById('speedSlider').addEventListener('input', (e) => {
-      globalSpeed = parseFloat(e.target.value); document.getElementById('speedVal').innerText = globalSpeed.toFixed(1);
     });
 
     document.getElementById('metroBtn').addEventListener('click', function() {
@@ -431,7 +410,7 @@
       while (nextNoteTime < audioCtx.currentTime + 0.1) {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.frequency.value = 1000 * globalPitch;
+        osc.frequency.value = 1000;
         gain.gain.setValueAtTime(0.5, nextNoteTime);
         gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.1);
         osc.connect(gain); gain.connect(audioCtx.destination);
@@ -439,42 +418,6 @@
         nextNoteTime += 60.0 / metroBPM;
       }
       metroTimerID = setTimeout(scheduler, 25);
-    }
-
-    function playSynthBeat(type, pitchMult) {
-      const time = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
-
-      if (type === "kick") {
-        osc.frequency.setValueAtTime(150 * pitchMult, time);
-        osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
-        gain.gain.setValueAtTime(1, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
-        osc.start(time); osc.stop(time + 0.5);
-      } else if (type === "808") {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(50 * pitchMult, time);
-        gain.gain.setValueAtTime(1, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 1.5);
-        osc.start(time); osc.stop(time + 1.5);
-      } else {
-        const bufferSize = audioCtx.sampleRate * 0.5;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-        const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
-        const noiseFilter = audioCtx.createBiquadFilter(); const noiseGain = audioCtx.createGain();
-        noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(audioCtx.destination);
-        if (type === "hihat") {
-          noiseFilter.type = 'highpass'; noiseFilter.frequency.value = 7000 * pitchMult;
-          noiseGain.gain.setValueAtTime(0.5, time); noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1); noise.start(time);
-        } else if (type === "openhat") {
-          noiseFilter.type = 'highpass'; noiseFilter.frequency.value = 5000 * pitchMult;
-          noiseGain.gain.setValueAtTime(0.5, time); noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.4); noise.start(time);
-        } else if (type === "snare" || type === "clap") {
-          noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = 1000 * pitchMult;
-          noiseGain.gain.setValueAtTime(1, time); noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.2); noise.start(time);
-        }
-      }
     }
   </script>
 </body>
