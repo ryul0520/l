@@ -3,38 +3,617 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>스마트 오디오 샘플러 (이펙트 & 자동녹음)</title>
+  <title>MY 커스텀 런치패드 PRO (스마트 녹음 & TTS & 이펙트)</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
   <style>
-    /* 1. 기본 스타일 및 레이아웃 초기화 */
-    * {
-      box-sizing: border-box;
+    :root {
+      --bg-color: #0a0a0f;
+      --panel-bg: rgba(20, 20, 30, 0.8);
+      --empty-color: #333344;
+      --recorded-color-1: #00f2fe;
+      --recorded-color-2: #4facfe;
+      --tts-color-1: #a29bfe;
+      --tts-color-2: #6c5ce7;
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      background-color: var(--bg-color);
       margin: 0;
       padding: 0;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f0f2f5;
-      color: #333;
-      padding: 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+      color: white;
+      user-select: none;
+      overflow: hidden;
     }
 
-    /* 2. 상단 모드 변경 버튼 */
+    header {
+      flex: 0 0 auto;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--panel-bg);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    
     .mode-switch {
       display: flex;
+      background: #222;
+      border-radius: 30px;
+      padding: 5px;
+      margin-bottom: 10px;
+      gap: 5px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
       flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 25px;
+      justify-content: center;
     }
     .mode-btn {
-      flex: 1;
+      background: transparent;
+      color: #aaa;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 25px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .mode-btn.active { color: black; }
+    .mode-btn[data-mode="play"].active { background: #00f2fe; box-shadow: 0 0 15px #00f2fe; }
+    .mode-btn[data-mode="move"].active { background: #ffcc00; box-shadow: 0 0 15px #ffcc00; }
+    .mode-btn[data-mode="rename"].active { background: #00ff99; box-shadow: 0 0 15px #00ff99; }
+    .mode-btn[data-mode="record"].active { background: #ff3366; box-shadow: 0 0 15px #ff3366; color: white;}
+    .mode-btn[data-mode="tts"].active { background: #a29bfe; box-shadow: 0 0 15px #a29bfe; color: black;}
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+    button.metro-btn {
+      background: #333;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.metro-btn.active { background: #00f2fe; color: black; }
+    input[type=range] { cursor: pointer; width: 60px; }
+    input[type=checkbox] { cursor: pointer; transform: scale(1.2); margin-right: 3px;}
+
+    .launchpad-container {
+      flex: 1 1 auto;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .launchpad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+      max-width: 1200px;
+      max-height: 800px;
+    }
+
+    .pad {
+      border: none;
+      border-radius: 15px;
+      font-size: clamp(12px, 2vw, 20px);
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: pre-line;
+      word-break: break-word;
+      padding: 10px;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.1s;
+      position: relative;
+      background: var(--empty-color);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 0px #1a1a24;
+    }
+    
+    .pad.has-audio {
+      color: white;
+      background: linear-gradient(135deg, var(--recorded-color-1), var(--recorded-color-2));
+      box-shadow: 0 8px 0px #1a5b99, inset 0 0 20px rgba(255,255,255,0.2);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+    .pad.has-tts {
+      color: white;
+      background: linear-gradient(135deg, var(--tts-color-1), var(--tts-color-2));
+      box-shadow: 0 8px 0px #4a3b99, inset 0 0 20px rgba(255,255,255,0.2);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .pad.active {
+      transform: scale(0.92) translateY(5px) !important;
+      filter: brightness(1.4);
+    }
+    .pad.has-audio.active { box-shadow: 0 0px 0px #1a5b99, 0 0 30px var(--recorded-color-1); }
+    .pad.has-tts.active { box-shadow: 0 0px 0px #4a3b99, 0 0 30px var(--tts-color-1); }
+
+    body.mode-move .pad { cursor: grab; animation: jiggle 0.3s infinite alternate; }
+    body.mode-rename .pad { cursor: text; border: 2px dashed #00ff99; }
+    body.mode-tts .pad { cursor: text; border: 2px dashed #a29bfe; }
+    
+    @keyframes jiggle {
+      0% { transform: rotate(-1deg) scale(0.98); }
+      100% { transform: rotate(1deg) scale(1.02); }
+    }
+    
+    .sortable-ghost { opacity: 0.2; }
+    .sortable-drag {
+      cursor: grabbing !important;
+      opacity: 1 !important;
+      transform: scale(1.1) translateY(-10px) !important;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.8) !important;
+      z-index: 100;
+    }
+
+    .pad.countdown {
+      background: #ffcc00 !important;
+      color: black !important;
+      font-size: clamp(30px, 5vw, 50px) !important;
+      box-shadow: 0 0 30px #ffcc00 !important;
+      transform: scale(1.05);
+    }
+
+    @keyframes pulseWait {
+      0% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0.8); }
+      70% { box-shadow: 0 0 0 15px rgba(255, 153, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 153, 0, 0); }
+    }
+    .pad.waiting {
+      background: #ff9900 !important;
+      color: white !important;
+      box-shadow: 0 0 0 0 rgba(255, 153, 0, 0.8) !important;
+      animation: pulseWait 1.5s infinite !important;
+      transform: scale(0.95);
+    }
+
+    @keyframes pulseRecord {
+      0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.8); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 51, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+    }
+    .pad.recording {
+      background: #ff3366 !important;
+      color: white !important;
+      box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.8) !important;
+      animation: pulseRecord 1s infinite !important;
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎛️ 100% MY 커스텀 런치패드 (TTS & 이펙트)</h1>
+    
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="play">🎵 연주</button>
+      <button class="mode-btn" data-mode="move">🔄 자리 변경</button>
+      <button class="mode-btn" data-mode="rename">✏️ 이름 변경</button>
+      <button class="mode-btn" data-mode="record">🎙️ 스마트 녹음</button>
+      <button class="mode-btn" data-mode="tts">💬 TTS 입력</button>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <button id="metroBtn" class="metro-btn">메트로놈 OFF</button>
+        <label>BPM: <input type="range" id="bpmSlider" min="60" max="200" value="120"> <span id="bpmVal">120</span></label>
+      </div>
+      <div class="control-group">
+        <label>🔊 소리: <input type="range" id="volumeSlider" min="0" max="2.0" step="0.1" value="1.0"> x<span id="volumeVal">1.0</span></label>
+        <label>🎚️ 피치: <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0"> x<span id="pitchVal">1.0</span></label>
+      </div>
+      <div class="control-group">
+        <label><input type="checkbox" id="reverbCheck"> 🌌리버브</label>
+        <label><input type="checkbox" id="echoCheck"> 📢에코</label>
+        <label><input type="checkbox" id="distortCheck"> 🎸디스토션</label>
+      </div>
+    </div>
+  </header>
+  
+  <div class="launchpad-container">
+    <div class="launchpad" id="launchpad"></div>
+  </div>
+
+  <script>
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    let currentMode = 'play'; 
+    let globalVolume = 1.0;
+    let globalPitch = 1.0;
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    let isCountingDown = false; 
+    let isWaitingForSound = false; 
+    let analyserLoopId;
+    let recordingBtn = null;
+
+    const padsData = Array.from({ length: 15 }, (_, i) => ({
+      id: `pad_${i+1}`,
+      text: `PAD ${i+1}`,
+      customAudioBuffer: null,
+      fallbackTTS: null 
+    }));
+
+    const launchpad = document.getElementById('launchpad');
+
+    padsData.forEach((data) => {
+      const btn = document.createElement('button');
+      btn.className = 'pad';
+      btn.innerText = data.text;
+      btn.dataset.id = data.id;
+      btn.addEventListener('pointerdown', (e) => handlePadClick(data, btn, e));
+      launchpad.appendChild(btn);
+    });
+
+    const sortable = new Sortable(launchpad, {
+      animation: 150,
+      disabled: true,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag'
+    });
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isCountingDown) return; 
+        if (isRecording || isWaitingForSound) stopRecording(padsData.find(d => d.id === recordingBtn.dataset.id), recordingBtn);
+
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        document.body.className = `mode-${currentMode}`;
+
+        sortable.option('disabled', currentMode !== 'move');
+      });
+    });
+
+    async function handlePadClick(data, btn, e) {
+      if (currentMode === 'move') return; 
+
+      if (currentMode === 'rename') {
+        const newName = prompt("이 패드의 새로운 이름을 입력하세요:", data.text);
+        if (newName !== null && newName.trim() !== "") {
+          data.text = newName;
+          btn.innerText = newName;
+        }
+        return;
+      }
+
+      // 💬 TTS 텍스트 입력 모드
+      if (currentMode === 'tts') {
+        const text = prompt("재생할 단어나 문장을 입력하세요 (TTS):", "");
+        if (text !== null && text.trim() !== "") {
+          generateTTS(data, btn, text.trim());
+        }
+        return;
+      }
+
+      if (currentMode === 'record') {
+        if (isCountingDown) return; 
+        if (isRecording || isWaitingForSound) {
+          if (recordingBtn === btn) stopRecording(data, btn); 
+          else alert("현재 다른 패드를 녹음 대기/진행 중입니다!");
+        } else {
+          startCountdownAndRecord(data, btn);
+        }
+        return;
+      }
+
+      if (currentMode === 'play') {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        playSound(data, btn);
+      }
+    }
+
+    // 💬 TTS 생성 함수 (이펙트 적용을 위해 오디오 버퍼로 디코딩)
+    async function generateTTS(data, btn, text) {
+      initAudio();
+      btn.classList.remove('has-audio', 'has-tts');
+      btn.classList.add('waiting');
+      btn.innerHTML = "⏳<br>생성 중...";
+
+      try {
+        // 구글 번역 TTS를 가져와 바이너리로 변환 (CORS 우회를 위해 프록시 사용)
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent(text)}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`;
+        
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("네트워크 오류");
+        
+        const arrayBuffer = await response.arrayBuffer();
+        data.customAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        data.fallbackTTS = null; 
+        
+        data.text = text;
+        btn.classList.remove('waiting');
+        btn.classList.add('has-tts'); // 보라색 테마 적용
+        btn.innerText = text;
+
+      } catch (err) {
+        console.warn("TTS 오디오 버퍼 생성 실패, 기본 브라우저 TTS로 대체합니다.", err);
+        // 네트워크 제한으로 파일 변환 실패시 브라우저 기본 TTS로 폴백 (이 경우 이펙트는 적용 안됨)
+        data.customAudioBuffer = null;
+        data.fallbackTTS = text;
+        
+        data.text = text;
+        btn.classList.remove('waiting');
+        btn.classList.add('has-tts');
+        btn.innerText = text;
+      }
+    }
+
+    // ⏱️ 카운트다운 -> 🎙️ 소리 감지 대기 -> 🔴 자동 녹음
+    async function startCountdownAndRecord(data, btn) {
+      let stream;
+      try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } 
+      catch (err) { alert("마이크 접근 권한이 필요합니다!"); return; }
+
+      initAudio(); 
+      isCountingDown = true;
+      for (let i = 3; i > 0; i--) {
+        btn.classList.add('countdown');
+        btn.innerText = i;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      btn.classList.remove('countdown');
+      btn.classList.add('waiting');
+      btn.innerHTML = "🎤<br>큰 소리 대기중...";
+
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+
+      isCountingDown = false;
+      isWaitingForSound = true;
+      recordingBtn = btn;
+      const THRESHOLD = 35; // 마이크 감도
+
+      function checkSoundLevel() {
+        if (!isWaitingForSound) return;
+        analyser.getByteFrequencyData(dataArray);
+        let maxVol = 0;
+        for (let i = 0; i < bufferLength; i++) { if (dataArray[i] > maxVol) maxVol = dataArray[i]; }
+
+        if (maxVol > THRESHOLD) {
+          isWaitingForSound = false;
+          mediaRecorder.start();
+          isRecording = true;
+          btn.classList.remove('waiting');
+          btn.classList.add('recording');
+          btn.innerHTML = "🔴<br>녹음 중...<br>(클릭시 정지)";
+        } else {
+          analyserLoopId = requestAnimationFrame(checkSoundLevel);
+        }
+      }
+      checkSoundLevel();
+    }
+
+    async function stopRecording(data, btn) {
+      if (isWaitingForSound) {
+        isWaitingForSound = false;
+        cancelAnimationFrame(analyserLoopId);
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        btn.classList.remove('waiting');
+        btn.innerText = data.text;
+        recordingBtn = null;
+        return;
+      }
+
+      mediaRecorder.onstop = async () => {
+        initAudio();
+        const audioBlob = new Blob(audioChunks);
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        data.customAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        data.fallbackTTS = null; 
+        
+        btn.classList.remove('recording', 'has-tts');
+        btn.classList.add('has-audio'); // 파란색 테마
+        btn.innerText = data.text; 
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.stop();
+      isRecording = false;
+      recordingBtn = null;
+    }
+
+    // 🎵 사운드 재생 (이펙트 & 볼륨 & 피치 적용)
+    function playSound(data, btn) {
+      initAudio();
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 100);
+
+      if (data.customAudioBuffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = data.customAudioBuffer;
+        source.playbackRate.value = globalPitch; 
+        
+        let currentNode = source;
+
+        // 🎸 디스토션
+        if (document.getElementById('distortCheck').checked) {
+          const distortion = audioCtx.createWaveShaper();
+          distortion.curve = makeDistortionCurve(50); 
+          distortion.oversample = '4x';
+          currentNode.connect(distortion);
+          currentNode = distortion;
+        }
+
+        // 📢 에코
+        if (document.getElementById('echoCheck').checked) {
+          const delay = audioCtx.createDelay();
+          delay.delayTime.value = 0.3; 
+          const feedback = audioCtx.createGain();
+          feedback.gain.value = 0.4; 
+          const delayGain = audioCtx.createGain();
+          delayGain.gain.value = 0.6; 
+          
+          currentNode.connect(delay);
+          delay.connect(feedback);
+          feedback.connect(delay);
+          delay.connect(delayGain);
+          
+          const mergeNode = audioCtx.createGain();
+          currentNode.connect(mergeNode);
+          delayGain.connect(mergeNode);
+          currentNode = mergeNode;
+        }
+
+        // 🌌 리버브
+        if (document.getElementById('reverbCheck').checked) {
+          const reverb = audioCtx.createConvolver();
+          if (!window.reverbBuffer) window.reverbBuffer = createReverbBuffer(audioCtx);
+          reverb.buffer = window.reverbBuffer;
+          
+          const mergeNode = audioCtx.createGain();
+          currentNode.connect(mergeNode);
+          
+          const wetGain = audioCtx.createGain();
+          wetGain.gain.value = 0.6; 
+          
+          currentNode.connect(reverb);
+          reverb.connect(wetGain);
+          wetGain.connect(mergeNode);
+          currentNode = mergeNode;
+        }
+
+        // 🔊 최종 볼륨
+        const volumeNode = audioCtx.createGain();
+        volumeNode.gain.value = globalVolume; 
+        
+        currentNode.connect(volumeNode);
+        volumeNode.connect(audioCtx.destination);
+        
+        source.start(0);
+
+      } else if (data.fallbackTTS) {
+        // 브라우저 내장 보조 TTS (이펙트 X, 볼륨과 피치만 적용됨)
+        const utterance = new SpeechSynthesisUtterance(data.fallbackTTS);
+        utterance.lang = 'ko-KR';
+        utterance.pitch = globalPitch;
+        utterance.volume = globalVolume;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function makeDistortionCurve(amount) {
+      const k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        let x = i * 2 / n_samples - 1;
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    function createReverbBuffer(ctx) {
+      let length = ctx.sampleRate * 2.0;
+      let impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+      for (let i = 0; i < 2; i++) {
+        let channelData = impulse.getChannelData(i);
+        for (let j = 0; j < length; j++) { channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 3); }
+      }
+      return impulse;
+    }
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    document.getElementById('volumeSlider').addEventListener('input', (e) => {
+      globalVolume = parseFloat(e.target.value); document.getElementById('volumeVal').innerText = globalVolume.toFixed(1);
+    });
+
+    document.getElementById('pitchSlider').addEventListener('input', (e) => {
+      globalPitch = parseFloat(e.target.value); document.getElementById('pitchVal').innerText = globalPitch.toFixed(1);
+    });
+
+    document.getElementById('bpmSlider').addEventListener('input', (e) => {
+      metroBPM = e.target.value; document.getElementById('bpmVal').innerText = metroBPM;
+    });
+
+    let metroBPM = 120, isMetroPlaying = false, nextNoteTime = 0.0, metroTimerID;
+    document.getElementById('metroBtn').addEventListener('click', function() {
+      initAudio();
+      isMetroPlaying = !isMetroPlaying;
+      if (isMetroPlaying) {
+        this.innerText = "메트로놈 ON"; this.classList.add('active');
+        nextNoteTime = audioCtx.currentTime + 0.05; scheduler();
+      } else {
+        this.innerText = "메트로놈 OFF"; this.classList.remove('active'); clearTimeout(metroTimerID);
+      }
+    });
+
+    function scheduler() {
+      while (nextNoteTime < audioCtx.currentTime + 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0.5, nextNoteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(nextNoteTime); osc.stop(nextNoteTime + 0.1);
+        nextNoteTime += 60.0 / metroBPM;
+      }
+      metroTimerID = setTimeout(scheduler, 25);
+    }
+  </script>
+</body>
+</html>      flex: 1;
       min-width: 120px;
       padding: 12px 15px;
       border: 2px solid #e0e0e0;
