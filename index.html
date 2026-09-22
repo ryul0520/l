@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MY 커스텀 런치패드 PRO</title>
+  <title>MY 커스텀 런치패드 PRO (카운트다운)</title>
   
-  <!-- 부드러운 드래그 앤 드롭 -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
   <style>
@@ -35,6 +34,394 @@
 
     header {
       flex: 0 0 auto;
+      padding: 10px 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--panel-bg);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+    
+    .mode-switch {
+      display: flex;
+      background: #222;
+      border-radius: 30px;
+      padding: 5px;
+      margin-bottom: 10px;
+      gap: 5px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .mode-btn {
+      background: transparent;
+      color: #aaa;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 25px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .mode-btn.active { color: black; }
+    .mode-btn[data-mode="play"].active { background: #00f2fe; box-shadow: 0 0 15px #00f2fe; }
+    .mode-btn[data-mode="move"].active { background: #ffcc00; box-shadow: 0 0 15px #ffcc00; }
+    .mode-btn[data-mode="record"].active { background: #ff3366; box-shadow: 0 0 15px #ff3366; color: white;}
+    .mode-btn[data-mode="rename"].active { background: #00ff99; box-shadow: 0 0 15px #00ff99; }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 13px;
+    }
+    button.metro-btn {
+      background: #333;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.metro-btn.active { background: #00f2fe; color: black; }
+    input[type=range] { cursor: pointer; width: 70px; }
+
+    .launchpad-container {
+      flex: 1 1 auto;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .launchpad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+      max-width: 1200px;
+      max-height: 800px;
+    }
+
+    .pad {
+      border: none;
+      border-radius: 15px;
+      font-size: clamp(12px, 2vw, 22px);
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: pre-line;
+      word-break: keep-all;
+      padding: 10px;
+      color: rgba(255,255,255,0.5);
+      transition: all 0.1s;
+      position: relative;
+      background: var(--empty-color);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 5px 0px #1a1a24;
+    }
+    
+    .pad.has-audio {
+      color: white;
+      background: linear-gradient(135deg, var(--recorded-color-1), var(--recorded-color-2));
+      box-shadow: 0 8px 0px #1a5b99, inset 0 0 20px rgba(255,255,255,0.2);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .pad.active {
+      transform: scale(0.92) translateY(5px) !important;
+      filter: brightness(1.4);
+    }
+    .pad.has-audio.active { box-shadow: 0 0px 0px #1a5b99, 0 0 30px var(--recorded-color-1); }
+
+    body.mode-move .pad { cursor: grab; animation: jiggle 0.3s infinite alternate; }
+    body.mode-rename .pad { cursor: text; border: 2px dashed #00ff99; }
+    @keyframes jiggle {
+      0% { transform: rotate(-1deg) scale(0.98); }
+      100% { transform: rotate(1deg) scale(1.02); }
+    }
+    
+    .sortable-ghost { opacity: 0.2; }
+    .sortable-drag {
+      cursor: grabbing !important;
+      opacity: 1 !important;
+      transform: scale(1.1) translateY(-10px) !important;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.8) !important;
+      z-index: 100;
+    }
+
+    /* ⏱️ 카운트다운 애니메이션 */
+    .pad.countdown {
+      background: #ffcc00 !important;
+      color: black !important;
+      font-size: clamp(30px, 5vw, 50px) !important;
+      box-shadow: 0 0 30px #ffcc00 !important;
+      transform: scale(1.05);
+    }
+
+    /* 🔴 녹음 중 애니메이션 */
+    @keyframes pulseRecord {
+      0% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.8); }
+      70% { box-shadow: 0 0 0 20px rgba(255, 51, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 51, 102, 0); }
+    }
+    .pad.recording {
+      background: #ff3366 !important;
+      color: white !important;
+      box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.8) !important;
+      animation: pulseRecord 1s infinite !important;
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎛️ 100% MY 커스텀 런치패드</h1>
+    
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="play">🎵 연주</button>
+      <button class="mode-btn" data-mode="move">🔄 자리 변경</button>
+      <button class="mode-btn" data-mode="rename">✏️ 이름 변경</button>
+      <button class="mode-btn" data-mode="record">🎙️ 소리 녹음</button>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <button id="metroBtn" class="metro-btn">메트로놈 OFF</button>
+        <label>BPM: <input type="range" id="bpmSlider" min="60" max="200" value="120"> <span id="bpmVal">120</span></label>
+      </div>
+      <div class="control-group">
+        <label>🎚️ 사운드 조절(Pitch): <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0"> x<span id="pitchVal">1.0</span></label>
+      </div>
+    </div>
+  </header>
+  
+  <div class="launchpad-container">
+    <div class="launchpad" id="launchpad"></div>
+  </div>
+
+  <script>
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+
+    let currentMode = 'play'; 
+    let globalPitch = 1.0;
+    
+    // 녹음 관련 변수
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    let isCountingDown = false; // 카운트다운 진행 상태 방지용
+    let recordingBtn = null;
+
+    const padsData = Array.from({ length: 15 }, (_, i) => ({
+      id: `pad_${i+1}`,
+      text: `PAD ${i+1}`,
+      customAudioBuffer: null
+    }));
+
+    const launchpad = document.getElementById('launchpad');
+
+    padsData.forEach((data) => {
+      const btn = document.createElement('button');
+      btn.className = 'pad';
+      btn.innerText = data.text;
+      btn.dataset.id = data.id;
+      
+      btn.addEventListener('pointerdown', (e) => handlePadClick(data, btn, e));
+      launchpad.appendChild(btn);
+    });
+
+    const sortable = new Sortable(launchpad, {
+      animation: 150,
+      disabled: true,
+      ghostClass: 'sortable-ghost',
+      dragClass: 'sortable-drag'
+    });
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isCountingDown) return; // 카운트다운 중 모드 변경 방지
+        if (isRecording) stopRecording();
+
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+        document.body.className = `mode-${currentMode}`;
+
+        sortable.option('disabled', currentMode !== 'move');
+      });
+    });
+
+    async function handlePadClick(data, btn, e) {
+      if (currentMode === 'move') return; 
+
+      if (currentMode === 'rename') {
+        const newName = prompt("이 패드의 새로운 이름을 입력하세요:", data.text);
+        if (newName !== null && newName.trim() !== "") {
+          data.text = newName;
+          btn.innerText = newName;
+        }
+        return;
+      }
+
+      if (currentMode === 'record') {
+        if (isCountingDown) return; // 카운트다운 도중 중복 클릭 방지
+        
+        if (isRecording) {
+          if (recordingBtn === btn) stopRecording(data, btn); 
+          else alert("현재 다른 패드를 녹음 중입니다!");
+        } else {
+          startCountdownAndRecord(data, btn);
+        }
+        return;
+      }
+
+      if (currentMode === 'play') {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        playSound(data, btn);
+      }
+    }
+
+    // ⏱️ 카운트다운 및 녹음 시작 함수
+    async function startCountdownAndRecord(data, btn) {
+      let stream;
+      try {
+        // 권한 요청을 먼저 받아서 카운트다운 도중에 권한 팝업이 뜨는 것을 방지
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err) {
+        alert("마이크 접근 권한이 필요합니다!");
+        return;
+      }
+
+      isCountingDown = true;
+
+      // 카운트다운 3, 2, 1
+      for (let i = 3; i > 0; i--) {
+        btn.classList.add('countdown');
+        btn.innerText = i;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // 녹음 시작
+      btn.classList.remove('countdown');
+      btn.classList.add('recording');
+      btn.innerHTML = "🔴<br>녹음 중...";
+
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+      
+      mediaRecorder.start();
+      isRecording = true;
+      isCountingDown = false;
+      recordingBtn = btn;
+    }
+
+    async function stopRecording(data, btn) {
+      mediaRecorder.onstop = async () => {
+        initAudio();
+        const audioBlob = new Blob(audioChunks);
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        data.customAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        
+        btn.classList.remove('recording');
+        btn.classList.add('has-audio'); 
+        btn.innerText = data.text; 
+
+        // 사용이 끝난 마이크 끄기 (브라우저 빨간불 제거)
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.stop();
+      isRecording = false;
+      recordingBtn = null;
+    }
+
+    function playSound(data, btn) {
+      initAudio();
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 100);
+
+      if (data.customAudioBuffer) {
+        const source = audioCtx.createBufferSource();
+        source.buffer = data.customAudioBuffer;
+        source.playbackRate.value = globalPitch; 
+        source.connect(audioCtx.destination);
+        source.start(0);
+      }
+    }
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    let metroBPM = 120, isMetroPlaying = false, nextNoteTime = 0.0, metroTimerID;
+    
+    document.getElementById('bpmSlider').addEventListener('input', (e) => {
+      metroBPM = e.target.value; document.getElementById('bpmVal').innerText = metroBPM;
+    });
+    document.getElementById('pitchSlider').addEventListener('input', (e) => {
+      globalPitch = parseFloat(e.target.value); document.getElementById('pitchVal').innerText = globalPitch.toFixed(1);
+    });
+
+    document.getElementById('metroBtn').addEventListener('click', function() {
+      initAudio();
+      isMetroPlaying = !isMetroPlaying;
+      if (isMetroPlaying) {
+        this.innerText = "메트로놈 ON"; this.classList.add('active');
+        nextNoteTime = audioCtx.currentTime + 0.05; scheduler();
+      } else {
+        this.innerText = "메트로놈 OFF"; this.classList.remove('active'); clearTimeout(metroTimerID);
+      }
+    });
+    function scheduler() {
+      while (nextNoteTime < audioCtx.currentTime + 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = 1000;
+        gain.gain.setValueAtTime(0.5, nextNoteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, nextNoteTime + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(nextNoteTime); osc.stop(nextNoteTime + 0.1);
+        nextNoteTime += 60.0 / metroBPM;
+      }
+      metroTimerID = setTimeout(scheduler, 25);
+    }
+  </script>
+</body>
+</html>      flex: 0 0 auto;
       padding: 10px 15px;
       display: flex;
       flex-direction: column;
