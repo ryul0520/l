@@ -82,7 +82,6 @@
     
     @keyframes jiggle { 0% { transform: rotate(-1deg) scale(0.98); } 100% { transform: rotate(1deg) scale(1.02); } }
     
-    /* 🎛️ 개별 설정 모달 (항목 추가) */
     .modal {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
@@ -147,7 +146,6 @@
         <span id="padVolumeVal" class="val">1.0</span>
       </div>
       
-      <!-- 속도와 피치를 분리했습니다! -->
       <div class="setting-row">
         <label>⏩ 속도</label>
         <input type="range" id="padSpeed" min="0.5" max="3.0" step="0.1" value="1.0">
@@ -185,7 +183,6 @@
     let mediaRecorder, audioChunks = [], isRecording = false, isCountingDown = false, isWaitingForSound = false; 
     let analyserLoopId, recordingBtn = null;
 
-    // 데이터 구조: speed(속도), pitch(음정) 모두 탑재.
     const padsData = Array.from({ length: 15 }, (_, i) => ({
       id: `pad_${i+1}`, text: `PAD ${i+1}`, customAudioBuffer: null, audioArrayBuffer: null, type: null,
       volume: 1.0, speed: 1.0, pitch: 0, reverb: 0.0, echo: 0.0
@@ -200,7 +197,7 @@
       btn.dataset.id = data.id;
       
       btn.addEventListener('pointerdown', (e) => {
-        initAudio(); // 💡 중요: 클릭 즉시 오디오엔진을 무조건 깨웁니다 (소리 먹통 버그 원천 차단)
+        initAudio(); 
         if (currentMode !== 'move') e.preventDefault(); 
         const targetData = padsData.find(p => p.id === btn.dataset.id);
         handlePadClick(targetData, btn, e);
@@ -217,7 +214,6 @@
     });
 
     let db;
-    // 버전을 올려서 안전하게 로딩 (에러 방어력 100배 상승)
     const request = indexedDB.open("LaunchpadProDB_V5", 1); 
     request.onupgradeneeded = (e) => { db = e.target.result; db.createObjectStore("pads", { keyPath: "id" }); };
     request.onsuccess = (e) => { db = e.target.result; loadFromDB(); };
@@ -243,13 +239,11 @@
           const data = padsData.find(p => p.id === item.id);
           if (!data) continue;
           
-          // 💡 소리 먹통 방지 안전 할당: undefined면 기본값 1.0, 0.0 등을 강제 주입
           data.text = item.text || data.text;
           data.volume = typeof item.volume === 'number' ? item.volume : 1.0;
           data.speed = typeof item.speed === 'number' ? item.speed : 1.0;
           data.pitch = typeof item.pitch === 'number' ? item.pitch : 0;
           
-          // 과거 호환성 변환
           if(typeof item.echo === 'boolean') data.echo = item.echo ? 0.5 : 0.0;
           else if(typeof item.echo === 'number') data.echo = item.echo;
           
@@ -265,7 +259,7 @@
           if (data.audioArrayBuffer) {
             try {
               const decoded = await audioCtx.decodeAudioData(data.audioArrayBuffer.slice(0));
-              try { data.customAudioBuffer = trimSilence(decoded); } catch(err) { data.customAudioBuffer = decoded; } // 자르기 에러나면 원본 유지
+              try { data.customAudioBuffer = trimSilence(decoded); } catch(err) { data.customAudioBuffer = decoded; } 
               btn.classList.add(data.type === 'tts' ? 'has-tts' : 'has-audio');
             } catch(err) { console.error("로딩 에러", err); }
           }
@@ -352,7 +346,6 @@
       if (currentMode === 'play') { playSound(data, btn); }
     }
 
-    // 오디오 앞뒤 빈 공간 자르기 (에러 방어 강화)
     function trimSilence(buffer) {
       try {
         const threshold = 0.02, channels = buffer.numberOfChannels, length = buffer.length;
@@ -371,35 +364,48 @@
         for (let i = 0; i < channels; i++) trimmedBuffer.copyToChannel(buffer.getChannelData(i).subarray(start, end), i);
         return trimmedBuffer;
       } catch (err) {
-        return buffer; // 에러나면 원본 반환해서 무조건 재생되게 함
+        return buffer;
       }
     }
 
-    // 💡 최고 등급 방어력: 프록시 서버 이중화로 무조건 다중 재생 버퍼(Web Audio) 만들기
+    // 🔥 오직 TTS 연결 막힘 방어력을 우주 끝까지 올린 핵심 로직 교체
     async function generateTTS(data, btn, text) {
       btn.classList.remove('has-audio', 'has-tts'); btn.classList.add('waiting'); btn.innerHTML = "⏳<br>생성 중...";
       
-      const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ko&q=${encodeURIComponent(text)}`;
-      const proxy1 = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ttsUrl)}`;
-      const proxy2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`;
+      // 1. 차단이 잘 안 당하는 구글 번역기 내부 API(gtx)로 변경
+      const ttsUrl = `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=ko&q=${encodeURIComponent(text)}`;
       
-      let arrayBuffer;
+      // 2. 뚫릴 때까지 반복해서 시도할 프록시 우회서버 4개 대기
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(ttsUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ttsUrl)}`,
+        `https://thingproxy.freeboard.io/fetch/${ttsUrl}`
+      ];
+      
+      let arrayBuffer = null;
 
-      try {
-        let res = await fetch(proxy1); // 1번 우회 서버 시도
-        if (!res.ok) throw new Error("Proxy 1 Error");
-        arrayBuffer = await res.arrayBuffer();
-      } catch (e1) {
+      // 3. 서버 하나가 막히면 자동으로 다음 서버로 넘어가서 시도
+      for (let i = 0; i < proxies.length; i++) {
         try {
-          let res2 = await fetch(proxy2); // 2번 우회 서버 시도
-          if (!res2.ok) throw new Error("Proxy 2 Error");
-          arrayBuffer = await res2.arrayBuffer();
-        } catch (e2) {
-          // 서버가 둘 다 죽었을 경우에만 에러 출력 (내장 TTS 폴백 금지 -> 내장 TTS는 겹쳐서 안 나오므로 아예 차단)
-          alert("TTS 서버 통신에 실패했습니다. 인터넷 상태를 확인하거나 잠시 후 다시 시도해주세요.");
-          btn.classList.remove('waiting'); btn.innerText = data.text;
-          return;
+          const res = await fetch(proxies[i]);
+          if (!res.ok) continue; // 통신 실패시 다음 서버 시도
+          
+          // 우회 서버가 오디오 대신 에러안내용 텍스트/HTML을 반환하는 것 필터링
+          const contentType = res.headers.get("content-type");
+          if (contentType && !contentType.includes("audio")) continue; 
+
+          arrayBuffer = await res.arrayBuffer();
+          if (arrayBuffer.byteLength > 0) break; // 파일 정상 수신! 반복문 탈출
+        } catch (e) {
+          console.warn(`Proxy ${i + 1} Failed, trying next...`);
         }
+      }
+
+      if (!arrayBuffer) {
+        alert("현재 TTS 우회 서버들이 일시적으로 막혀있습니다.\n잠시 후 다시 시도해주세요.");
+        btn.classList.remove('waiting'); btn.innerText = data.text;
+        return;
       }
 
       try {
@@ -463,20 +469,15 @@
       mediaRecorder.stop(); isRecording = false; recordingBtn = null;
     }
 
-    // 💡 완벽해진 재생 로직 (속도/피치 분리 & 무제한 다중재생)
     function playSound(data, btn) {
-      if (!data.customAudioBuffer) return; // 빈 패드 클릭 시 무시
+      if (!data.customAudioBuffer) return; 
 
       btn.classList.add('active'); setTimeout(() => btn.classList.remove('active'), 100);
 
       const source = audioCtx.createBufferSource();
       source.buffer = data.customAudioBuffer;
       
-      // ✅ 1. 속도 적용 (Speed)
       source.playbackRate.value = data.speed || 1.0; 
-      
-      // ✅ 2. 피치(음정) 적용 (Pitch: -12 ~ +12 반음) => detune 속성 사용
-      // 100 cents = 1 반음 (semitone). 따라서 pitch 값에 100을 곱합니다.
       source.detune.value = (data.pitch || 0) * 100; 
       
       const masterMix = audioCtx.createGain(); 
@@ -485,7 +486,6 @@
       const dryGain = audioCtx.createGain(); dryGain.gain.value = 1.0; 
       source.connect(dryGain); dryGain.connect(masterMix);
 
-      // 에코 (Delay)
       if (data.echo > 0) {
         const delay = audioCtx.createDelay(); delay.delayTime.value = 0.3; 
         const feedback = audioCtx.createGain(); feedback.gain.value = 0.4; 
@@ -494,7 +494,6 @@
         source.connect(delay); delay.connect(feedback); feedback.connect(delay); delay.connect(echoWet); echoWet.connect(masterMix);
       }
 
-      // 리버브 (Reverb)
       if (data.reverb > 0) {
         const reverb = audioCtx.createConvolver();
         if (!window.reverbBuffer) window.reverbBuffer = createReverbBuffer(audioCtx);
@@ -519,7 +518,6 @@
       } return impulse;
     }
     
-    // 오디오 컨텍스트 100% 강제 깨우기
     function initAudio() { 
       if (!audioCtx) audioCtx = new AudioContext(); 
       if (audioCtx.state === 'suspended') audioCtx.resume(); 
