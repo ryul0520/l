@@ -3,38 +3,483 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MY 커스텀 런치패드 PRO (카운트다운)</title>
-  
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
+  <title>오디오 샘플러 & 스마트 녹음기</title>
   <style>
-    :root {
-      --bg-color: #0a0a0f;
-      --panel-bg: rgba(20, 20, 30, 0.8);
-      --empty-color: #333344;
-      --recorded-color-1: #00f2fe;
-      --recorded-color-2: #4facfe;
-    }
-    
-    * { box-sizing: border-box; }
-    
     body {
-      background-color: var(--bg-color);
-      margin: 0;
-      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .mode-switch {
       display: flex;
-      flex-direction: column;
-      height: 100vh;
-      width: 100vw;
-      font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .mode-btn {
+      padding: 10px 15px;
+      border: 2px solid #ccc;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .mode-btn.active {
+      background: #4caf50;
       color: white;
-      user-select: none;
-      overflow: hidden;
+      border-color: #4caf50;
+    }
+    .controls {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .control-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .control-group label {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    input[type="range"] {
+      cursor: pointer;
+    }
+    .metro-btn {
+      padding: 8px 12px;
+      background: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #recordControls {
+      display: none;
+      background: #ffebee;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ffcdd2;
+    }
+    #stopRecordBtn {
+      padding: 8px 15px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .pad-area {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    .pad {
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      height: 100px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #1565c0;
+      transition: 0.1s;
+    }
+    .pad:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 모드 선택 -->
+  <div class="mode-switch">
+    <button class="mode-btn active" data-mode="play">🎵 연주</button>
+    <button class="mode-btn" data-mode="move">🔄 자리 변경</button>
+    <button class="mode-btn" data-mode="rename">✏️ 이름 변경</button>
+    <button class="mode-btn" id="recordBtn" data-mode="record">🎙️ 소리 녹음 (스마트 감지)</button>
+  </div>
+
+  <!-- 컨트롤 패널 -->
+  <div class="controls">
+    <div class="control-group">
+      <button id="metroBtn" class="metro-btn">메트로놈 OFF</button>
+      <label>BPM: <input type="range" id="bpmSlider" min="60" max="200" value="120"> <span id="bpmVal">120</span></label>
+    </div>
+    
+    <div class="control-group">
+      <label>🔊 볼륨: <input type="range" id="volSlider" min="0" max="2.0" step="0.1" value="1.0"> <span id="volVal">1.0</span></label>
+      <label>🎚️ 피치: <input type="range" id="pitchSlider" min="0.5" max="2.0" step="0.1" value="1.0"> x<span id="pitchVal">1.0</span></label>
+    </div>
+
+    <div class="control-group">
+      <label><input type="checkbox" id="reverbToggle"> 🌌 리버브</label>
+      <label><input type="checkbox" id="echoToggle"> 🗣️ 에코</label>
+      <label><input type="checkbox" id="distToggle"> 🎸 디스토션</label>
+    </div>
+
+    <!-- 녹음 제어 패널 (숨김 처리됨) -->
+    <div id="recordControls">
+      <div class="control-group">
+        <label>🎙️ 감도 (수치가 높을수록 큰 소리에 반응): 
+          <input type="range" id="thresholdSlider" min="10" max="250" value="100"> 
+          <span id="thresholdVal">100</span>
+        </label>
+      </div>
+      <p id="recordStatus" style="font-weight: bold; color: #ff9800;">마이크 권한을 허용해주세요...</p>
+      <button id="stopRecordBtn">녹음 강제 종료</button>
+    </div>
+  </div>
+
+  <!-- 테스트용 패드 -->
+  <div class="pad-area">
+    <button class="pad" id="testPad">테스트 사운드<br>재생</button>
+  </div>
+
+  <script>
+    // -----------------------------------------------------
+    // 1. Web Audio API 초기화 및 이펙트 설정
+    // -----------------------------------------------------
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    // 마스터 볼륨(Gain) 노드
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1.0;
+    masterGain.connect(audioCtx.destination);
+
+    // 🌌 리버브 노드 생성
+    const reverbNode = audioCtx.createConvolver();
+    function createReverbBuffer() {
+        let length = audioCtx.sampleRate * 2.5; // 2.5초 길이
+        let impulse = audioCtx.createBuffer(2, length, audioCtx.sampleRate);
+        for (let i = 0; i < 2; i++) {
+            let channelData = impulse.getChannelData(i);
+            for (let j = 0; j < length; j++) {
+                channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
+            }
+        }
+        reverbNode.buffer = impulse;
+    }
+    createReverbBuffer();
+
+    // 🗣️ 에코 노드 생성
+    const echoNode = audioCtx.createDelay();
+    echoNode.delayTime.value = 0.3; // 0.3초 딜레이
+    const feedbackGain = audioCtx.createGain();
+    feedbackGain.gain.value = 0.4; // 메아리 반복 길이
+    echoNode.connect(feedbackGain);
+    feedbackGain.connect(echoNode);
+    echoNode.connect(masterGain);
+
+    // 🎸 디스토션 노드 생성
+    const distortionNode = audioCtx.createWaveShaper();
+    function makeDistortionCurve(amount) {
+        let k = amount, n_samples = 44100, curve = new Float32Array(n_samples);
+        let deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+            let x = i * 2 / n_samples - 1;
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    }
+    distortionNode.curve = makeDistortionCurve(400); // 찌그러짐 강도
+    distortionNode.oversample = '4x';
+
+
+    // -----------------------------------------------------
+    // 2. UI 슬라이더 및 모드 버튼 이벤트
+    // -----------------------------------------------------
+    document.getElementById('volSlider').addEventListener('input', (e) => {
+        document.getElementById('volVal').innerText = e.target.value;
+        masterGain.gain.value = parseFloat(e.target.value);
+    });
+
+    document.getElementById('pitchSlider').addEventListener('input', (e) => {
+        document.getElementById('pitchVal').innerText = e.target.value;
+    });
+
+    document.getElementById('thresholdSlider').addEventListener('input', (e) => {
+        document.getElementById('thresholdVal').innerText = e.target.value;
+    });
+
+    document.getElementById('bpmSlider').addEventListener('input', (e) => {
+        document.getElementById('bpmVal').innerText = e.target.value;
+    });
+
+    // 모드 버튼 스타일 스위칭 기능
+    const modeBtns = document.querySelectorAll('.mode-btn:not(#recordBtn)');
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+
+    // -----------------------------------------------------
+    // 3. 소리 재생 기능 (이펙트 & 피치 적용)
+    // -----------------------------------------------------
+    function playSound(buffer) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        
+        // 피치만 독립적으로 조절
+        source.playbackRate.value = parseFloat(document.getElementById('pitchSlider').value); 
+
+        // 이펙트 체인 연결을 위한 변수
+        let effectSource = source;
+
+        // 디스토션 (직렬 연결)
+        if (document.getElementById('distToggle').checked) {
+            effectSource.connect(distortionNode);
+            effectSource = distortionNode;
+        }
+
+        // 기본 소리를 마스터로 연결
+        effectSource.connect(masterGain);
+
+        // 에코 (병렬 연결)
+        if (document.getElementById('echoToggle').checked) {
+            effectSource.connect(echoNode);
+        }
+        
+        // 리버브 (병렬 연결)
+        if (document.getElementById('reverbToggle').checked) {
+            effectSource.connect(reverbNode);
+            reverbNode.connect(masterGain);
+        }
+
+        source.start(0);
     }
 
-    header {
-      flex: 0 0 auto;
-      padding: 10px 15px;
+    // [테스트용] 전자음(삐- 소리) 버퍼 생성 및 패드 클릭 이벤트
+    function createTestSound() {
+        const sampleRate = audioCtx.sampleRate;
+        const buffer = audioCtx.createBuffer(1, sampleRate * 0.3, sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+            // 소리가 점점 줄어드는(Decay) 사인파 생성
+            data[i] = Math.sin(440 * Math.PI * 2 * (i / sampleRate)) * Math.exp(-i / (sampleRate * 0.1)); 
+        }
+        return buffer;
+    }
+    const testBuffer = createTestSound();
+    document.getElementById('testPad').addEventListener('click', () => playSound(testBuffer));
+
+
+    // -----------------------------------------------------
+    // 4. 큰 소리 감지 시 스마트 녹음 기능
+    // -----------------------------------------------------
+    let mediaRecorder;
+    let audioChunks = [];
+    let isWaitingForSound = false;
+    let analyser, micStream;
+
+    const recordBtn = document.getElementById('recordBtn');
+    const stopRecordBtn = document.getElementById('stopRecordBtn');
+    const recordStatus = document.getElementById('recordStatus');
+    const recordControls = document.getElementById('recordControls');
+
+    recordBtn.addEventListener('click', async () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        recordBtn.classList.add('active');
+        
+        recordControls.style.display = 'block';
+        recordStatus.innerText = "마이크 권한 요청 중...";
+        
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const micSource = audioCtx.createMediaStreamSource(micStream);
+            
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            micSource.connect(analyser);
+
+            mediaRecorder = new MediaRecorder(micStream);
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                console.log("녹음 완료! Blob 객체:", audioBlob);
+                alert("녹음이 완료되었습니다!");
+                
+                // 마이크 정리 및 UI 초기화
+                audioChunks = [];
+                recordControls.style.display = 'none';
+                micStream.getTracks().forEach(track => track.stop()); 
+                recordBtn.classList.remove('active');
+            };
+
+            isWaitingForSound = true;
+            recordStatus.innerText = "녹음 대기 중... (큰 소리를 내면 시작됩니다!)";
+            recordStatus.style.color = "#ff9800";
+            monitorSound();
+
+        } catch (err) {
+            alert("마이크 접근이 거부되었거나 장치를 찾을 수 없습니다.");
+            recordControls.style.display = 'none';
+        }
+    });
+
+    // 마이크 볼륨 실시간 감시 (Threshold 체크)
+    function monitorSound() {
+        if (!isWaitingForSound) return;
+        
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(dataArray);
+        
+        // 현재 마이크에서 들어오는 소리 크기 (0 ~ 255)
+        let maxVolume = Math.max(...dataArray);
+        const threshold = parseInt(document.getElementById('thresholdSlider').value);
+
+        if (maxVolume >= threshold) {
+            // 소리가 설정값을 넘으면 녹음 시작!
+            isWaitingForSound = false;
+            mediaRecorder.start();
+            recordStatus.innerText = "🔴 녹음 중... (종료하려면 버튼 클릭)";
+            recordStatus.style.color = "red";
+            console.log("큰 소리 감지! 녹음 시작");
+        } else {
+            // 넘지 않으면 계속 반복해서 감시
+            requestAnimationFrame(monitorSound);
+        }
+    }
+
+    // 수동으로 녹음 멈추거나 취소하기
+    stopRecordBtn.addEventListener('click', () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        } else if (isWaitingForSound) {
+            isWaitingForSound = false;
+            recordControls.style.display = 'none';
+            if (micStream) micStream.getTracks().forEach(track => track.stop());
+            recordBtn.classList.remove('active');
+            alert("녹음 대기를 취소했습니다.");
+        }
+    });
+  </script>
+</body>
+</html>    source.buffer = buffer;
+    
+    // 피치만 따로 조절
+    source.playbackRate.value = parseFloat(document.getElementById('pitchSlider').value); 
+
+    // 이펙트 체인 연결
+    let effectSource = source;
+
+    if (document.getElementById('distToggle').checked) {
+        effectSource.connect(distortionNode);
+        effectSource = distortionNode;
+    }
+
+    // 기본(Dry) 소리 출력
+    effectSource.connect(masterGain);
+
+    // 병렬 이펙트(Wet) 연결
+    if (document.getElementById('echoToggle').checked) {
+        effectSource.connect(echoNode);
+    }
+    if (document.getElementById('reverbToggle').checked) {
+        effectSource.connect(reverbNode);
+        reverbNode.connect(masterGain);
+    }
+
+    source.start(0);
+}
+
+// --- 4. 큰 소리 감지 시 녹음 시작 (Audio Trigger) ---
+let mediaRecorder;
+let audioChunks = [];
+let isWaitingForSound = false;
+let analyser, micStream;
+
+const recordBtn = document.getElementById('recordBtn');
+const stopRecordBtn = document.getElementById('stopRecordBtn');
+const recordStatus = document.getElementById('recordStatus');
+const recordControls = document.getElementById('recordControls');
+
+recordBtn.addEventListener('click', async () => {
+    // 녹음 모드 UI 활성화
+    recordControls.style.display = 'block';
+    recordStatus.innerText = "녹음 대기 중... (큰 소리를 내세요)";
+    recordStatus.style.color = "#ff9800";
+    
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    // 마이크 접근
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const micSource = audioCtx.createMediaStreamSource(micStream);
+    
+    // 소리 분석기 설정
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    micSource.connect(analyser);
+
+    mediaRecorder = new MediaRecorder(micStream);
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        // 여기서 오디오 Blob을 저장하거나 패드에 할당하는 로직 추가
+        console.log("녹음 완료!", audioBlob);
+        audioChunks = [];
+        recordControls.style.display = 'none';
+        micStream.getTracks().forEach(track => track.stop()); // 마이크 끄기
+    };
+
+    isWaitingForSound = true;
+    monitorSound();
+});
+
+// 마이크 볼륨 실시간 모니터링
+function monitorSound() {
+    if (!isWaitingForSound) return;
+    
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(dataArray);
+    
+    // 현재 들어오는 소리 중 가장 큰 값 추출 (0 ~ 255)
+    let maxVolume = Math.max(...dataArray);
+    const threshold = parseInt(document.getElementById('thresholdSlider').value);
+
+    if (maxVolume >= threshold) {
+        // 감도(Threshold)를 넘으면 녹음 시작
+        isWaitingForSound = false;
+        mediaRecorder.start();
+        recordStatus.innerText = "🔴 녹음 중... (종료하려면 버튼 클릭)";
+        recordStatus.style.color = "red";
+        console.log("큰 소리 감지됨! 녹음 시작");
+    } else {
+        // 계속 모니터링
+        requestAnimationFrame(monitorSound);
+    }
+}
+
+stopRecordBtn.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    } else if (isWaitingForSound) {
+        // 대기 중 취소
+        isWaitingForSound = false;
+        recordControls.style.display = 'none';
+        if (micStream) micStream.getTracks().forEach(track => track.stop());
+    }
+});      padding: 10px 15px;
       display: flex;
       flex-direction: column;
       align-items: center;
